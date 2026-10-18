@@ -402,7 +402,9 @@ export const DashboardPage: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between text-xs text-uplivo-text-muted">
                     <span>{item.organizer}</span>
-                    <span>{new Date(item.startDate).toLocaleDateString()}</span>
+                    <span>
+                      {new Date(item.startDate || (item as any).eventStartDate || '').toLocaleDateString()}
+                    </span>
                   </div>
                 </Link>
               ))

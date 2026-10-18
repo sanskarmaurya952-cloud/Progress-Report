@@ -12,6 +12,20 @@ import {
 
 const router = Router();
 
+function formatEvent(event: any) {
+  if (!event) return event;
+  return {
+    ...event,
+    registrationUrl: event.registrationUrl,
+    registerUrl: event.registrationUrl,
+    eventStartDate: event.eventStartDate,
+    startDate: event.eventStartDate,
+    eventEndDate: event.eventEndDate,
+    endDate: event.eventEndDate,
+    creatorId: event.userId,
+  };
+}
+
 /**
  * POST /api/v1/events
  * Create a new hackathon or tech event.
@@ -23,18 +37,17 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user!.id;
-      const {
-        title,
-        description,
-        organizer,
-        registrationUrl,
-        eventStartDate,
-        eventEndDate,
-        registrationDeadline,
-        mode,
-        location,
-        category,
-      } = req.body as CreateEventInput;
+      const body = req.body as any;
+      const title = body.title;
+      const description = body.description;
+      const organizer = body.organizer;
+      const registrationUrl = (body.registrationUrl || body.registerUrl || '').trim();
+      const sDate = body.eventStartDate || body.startDate;
+      const eDate = body.eventEndDate !== undefined ? body.eventEndDate : body.endDate;
+      const rDeadline = body.registrationDeadline;
+      const mode = body.mode;
+      const location = body.location;
+      const category = body.category;
 
       const event = await prisma.hackathonEvent.create({
         data: {
@@ -42,10 +55,10 @@ router.post(
           title: title.trim(),
           description: description.trim(),
           organizer: organizer.trim(),
-          registrationUrl: registrationUrl.trim(),
-          eventStartDate: new Date(eventStartDate),
-          eventEndDate: eventEndDate ? new Date(eventEndDate) : null,
-          registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
+          registrationUrl,
+          eventStartDate: new Date(sDate),
+          eventEndDate: eDate ? new Date(eDate) : null,
+          registrationDeadline: rDeadline ? new Date(rDeadline) : null,
           mode,
           location: location?.trim() || null,
           category: category.trim(),
@@ -65,7 +78,7 @@ router.post(
         success: true,
         message: 'Event created successfully',
         data: {
-          event,
+          event: formatEvent(event),
         },
       });
     } catch (error) {
@@ -152,7 +165,7 @@ router.get(
       res.status(200).json({
         success: true,
         data: {
-          events,
+          events: events.map(formatEvent),
           pagination: {
             page,
             limit,
@@ -205,7 +218,7 @@ router.get('/:id', authenticateUser, async (req: Request, res: Response): Promis
     res.status(200).json({
       success: true,
       data: {
-        event,
+        event: formatEvent(event),
       },
     });
   } catch (error) {
@@ -230,7 +243,7 @@ router.put(
     try {
       const id = req.params.id as string;
       const userId = req.user!.id;
-      const updates = req.body as UpdateEventInput;
+      const updates = req.body as any;
 
       const existingEvent = await prisma.hackathonEvent.findUnique({
         where: { id },
@@ -258,12 +271,13 @@ router.put(
       if (updates.title !== undefined) updateData.title = updates.title.trim();
       if (updates.description !== undefined) updateData.description = updates.description.trim();
       if (updates.organizer !== undefined) updateData.organizer = updates.organizer.trim();
-      if (updates.registrationUrl !== undefined)
-        updateData.registrationUrl = updates.registrationUrl.trim();
-      if (updates.eventStartDate !== undefined)
-        updateData.eventStartDate = new Date(updates.eventStartDate);
-      if (updates.eventEndDate !== undefined)
-        updateData.eventEndDate = updates.eventEndDate ? new Date(updates.eventEndDate) : null;
+      if (updates.registrationUrl !== undefined || updates.registerUrl !== undefined) {
+        updateData.registrationUrl = (updates.registrationUrl || updates.registerUrl || '').trim();
+      }
+      const sDate = updates.eventStartDate || updates.startDate;
+      if (sDate !== undefined) updateData.eventStartDate = new Date(sDate);
+      const eDate = updates.eventEndDate !== undefined ? updates.eventEndDate : updates.endDate;
+      if (eDate !== undefined) updateData.eventEndDate = eDate ? new Date(eDate) : null;
       if (updates.registrationDeadline !== undefined)
         updateData.registrationDeadline = updates.registrationDeadline
           ? new Date(updates.registrationDeadline)
@@ -290,7 +304,7 @@ router.put(
         success: true,
         message: 'Event updated successfully',
         data: {
-          event: updatedEvent,
+          event: formatEvent(updatedEvent),
         },
       });
     } catch (error) {

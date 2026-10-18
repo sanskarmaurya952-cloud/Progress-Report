@@ -109,13 +109,23 @@ export interface HackathonEvent {
   description: string;
   category?: string;
   mode: 'online' | 'offline' | 'hybrid';
-  location?: string;
-  startDate: string;
-  endDate: string;
-  registrationDeadline: string;
-  registerUrl: string;
+  location?: string | null;
+  startDate?: string;
+  eventStartDate?: string;
+  endDate?: string | null;
+  eventEndDate?: string | null;
+  registrationDeadline?: string | null;
+  registerUrl?: string;
+  registrationUrl?: string;
   creatorId?: string;
+  userId?: string;
   createdAt?: string;
+  updatedAt?: string;
+  user?: {
+    id: string;
+    fullName: string;
+    collegeName: string;
+  };
 }
 
 export interface PaginatedResponse<T> {

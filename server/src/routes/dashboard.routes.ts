@@ -125,7 +125,16 @@ router.get('/', authenticateUser, async (req: Request, res: Response): Promise<v
         recentSolves,
         latestResources,
         latestResearch,
-        upcomingEvents,
+        upcomingEvents: upcomingEvents.map((e) => ({
+          ...e,
+          registrationUrl: e.registrationUrl,
+          registerUrl: e.registrationUrl,
+          eventStartDate: e.eventStartDate,
+          startDate: e.eventStartDate,
+          eventEndDate: e.eventEndDate,
+          endDate: e.eventEndDate,
+          creatorId: e.userId,
+        })),
       },
     });
   } catch (error) {

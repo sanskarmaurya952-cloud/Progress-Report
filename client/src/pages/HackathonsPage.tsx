@@ -115,6 +115,11 @@ export const HackathonsPage: React.FC = () => {
 
   const handleOpenEditModal = (event: HackathonEvent) => {
     setEditingEvent(event);
+    const regUrl = event.registerUrl || event.registrationUrl || '';
+    const sDate = event.startDate || event.eventStartDate || '';
+    const eDate = event.endDate || event.eventEndDate || '';
+    const rDead = event.registrationDeadline || '';
+
     setFormData({
       title: event.title,
       organizer: event.organizer,
@@ -122,12 +127,10 @@ export const HackathonsPage: React.FC = () => {
       category: event.category || 'Hackathon',
       mode: event.mode,
       location: event.location || '',
-      startDate: event.startDate ? event.startDate.split('T')[0] || '' : '',
-      endDate: event.endDate ? event.endDate.split('T')[0] || '' : '',
-      registrationDeadline: event.registrationDeadline
-        ? event.registrationDeadline.split('T')[0] || ''
-        : '',
-      registerUrl: event.registerUrl,
+      startDate: sDate ? sDate.split('T')[0] || '' : '',
+      endDate: eDate ? eDate.split('T')[0] || '' : '',
+      registrationDeadline: rDead ? rDead.split('T')[0] || '' : '',
+      registerUrl: regUrl,
     });
     setFormError(null);
     setModalOpen(true);
@@ -149,14 +152,6 @@ export const HackathonsPage: React.FC = () => {
       setFormError('Start date is required');
       return;
     }
-    if (!formData.endDate) {
-      setFormError('End date is required');
-      return;
-    }
-    if (!formData.registrationDeadline) {
-      setFormError('Registration deadline is required');
-      return;
-    }
     if (!formData.registerUrl.trim()) {
       setFormError('Registration URL is required');
       return;
@@ -164,15 +159,31 @@ export const HackathonsPage: React.FC = () => {
 
     setSubmitting(true);
     try {
+      const payload = {
+        title: formData.title.trim(),
+        organizer: formData.organizer.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        mode: formData.mode,
+        location: formData.location.trim() || undefined,
+        registrationUrl: formData.registerUrl.trim(),
+        registerUrl: formData.registerUrl.trim(),
+        eventStartDate: formData.startDate,
+        startDate: formData.startDate,
+        eventEndDate: formData.endDate || undefined,
+        endDate: formData.endDate || undefined,
+        registrationDeadline: formData.registrationDeadline || undefined,
+      };
+
       if (editingEvent) {
         await apiFetch(`/events/${editingEvent.id}`, {
           method: 'PUT',
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
       } else {
         await apiFetch('/events', {
           method: 'POST',
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
       }
 
@@ -315,7 +326,13 @@ export const HackathonsPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => {
-            const isCreator = user?.id && event.creatorId && user.id === event.creatorId;
+            const isCreator = Boolean(
+              user?.id && (event.creatorId === user.id || event.userId === user.id)
+            );
+            const startStr = event.startDate || event.eventStartDate;
+            const endStr = event.endDate || event.eventEndDate;
+            const deadlineStr = event.registrationDeadline;
+            const regUrl = event.registerUrl || event.registrationUrl || '#';
 
             return (
               <Card key={event.id} hover className="flex flex-col justify-between">
@@ -379,13 +396,15 @@ export const HackathonsPage: React.FC = () => {
                     </p>
 
                     <div className="pt-2 border-t border-uplivo-border/40 space-y-1.5 text-xs text-uplivo-text-muted">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-uplivo-primary-light shrink-0" />
-                        <span>
-                          {new Date(event.startDate).toLocaleDateString()} —{' '}
-                          {new Date(event.endDate).toLocaleDateString()}
-                        </span>
-                      </div>
+                      {startStr && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-uplivo-primary-light shrink-0" />
+                          <span>
+                            {new Date(startStr).toLocaleDateString()}
+                            {endStr ? ` — ${new Date(endStr).toLocaleDateString()}` : ''}
+                          </span>
+                        </div>
+                      )}
 
                       {event.location && event.mode !== 'online' && (
                         <div className="flex items-center gap-2">
@@ -394,22 +413,24 @@ export const HackathonsPage: React.FC = () => {
                         </div>
                       )}
 
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span>
-                          Register by:{' '}
-                          <span className="text-uplivo-text-secondary font-medium">
-                            {new Date(event.registrationDeadline).toLocaleDateString()}
+                      {deadlineStr && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <span>
+                            Register by:{' '}
+                            <span className="text-uplivo-text-secondary font-medium">
+                              {new Date(deadlineStr).toLocaleDateString()}
+                            </span>
                           </span>
-                        </span>
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </div>
 
                 <CardFooter className="pt-3 pb-3">
                   <a
-                    href={event.registerUrl}
+                    href={regUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full"

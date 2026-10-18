@@ -28,36 +28,39 @@ export const createEventSchema = z
       .string({ required_error: 'Organizer is required' })
       .trim()
       .min(2, 'Organizer must be at least 2 characters'),
-    registrationUrl: z
-      .string({ required_error: 'Registration URL is required' })
-      .trim()
-      .url('Please provide a valid registration URL'),
+    registrationUrl: z.string().trim().url('Please provide a valid registration URL').optional(),
+    registerUrl: z.string().trim().url('Please provide a valid registration URL').optional(),
     eventStartDate: z
-      .string({ required_error: 'Event start date is required' })
-      .datetime({ message: 'Event start date must be a valid ISO datetime' })
-      .or(
-        z.string().refine((val) => !isNaN(Date.parse(val)), {
-          message: 'Event start date must be a valid date',
-        })
-      ),
+      .string()
+      .refine((val) => !isNaN(Date.parse(val)), {
+        message: 'Event start date must be a valid date',
+      })
+      .optional(),
+    startDate: z
+      .string()
+      .refine((val) => !isNaN(Date.parse(val)), {
+        message: 'Event start date must be a valid date',
+      })
+      .optional(),
     eventEndDate: z
       .string()
-      .datetime({ message: 'Event end date must be a valid ISO datetime' })
-      .or(
-        z.string().refine((val) => !isNaN(Date.parse(val)), {
-          message: 'Event end date must be a valid date',
-        })
-      )
+      .refine((val) => !isNaN(Date.parse(val)), {
+        message: 'Event end date must be a valid date',
+      })
+      .optional()
+      .nullable(),
+    endDate: z
+      .string()
+      .refine((val) => !isNaN(Date.parse(val)), {
+        message: 'Event end date must be a valid date',
+      })
       .optional()
       .nullable(),
     registrationDeadline: z
       .string()
-      .datetime({ message: 'Registration deadline must be a valid ISO datetime' })
-      .or(
-        z.string().refine((val) => !isNaN(Date.parse(val)), {
-          message: 'Registration deadline must be a valid date',
-        })
-      )
+      .refine((val) => !isNaN(Date.parse(val)), {
+        message: 'Registration deadline must be a valid date',
+      })
       .optional()
       .nullable(),
     mode: z.enum(EVENT_MODES, {
@@ -66,6 +69,20 @@ export const createEventSchema = z
     location: z.string().trim().optional().nullable(),
     category: z.string({ required_error: 'Category is required' }).trim().min(2),
   })
+  .refine(
+    (data) => Boolean((data.registrationUrl && data.registrationUrl.length > 0) || (data.registerUrl && data.registerUrl.length > 0)),
+    {
+      message: 'Registration URL is required',
+      path: ['registrationUrl'],
+    }
+  )
+  .refine(
+    (data) => Boolean(data.eventStartDate || data.startDate),
+    {
+      message: 'Event start date is required',
+      path: ['eventStartDate'],
+    }
+  )
   .refine(
     (data) => {
       if ((data.mode === 'offline' || data.mode === 'hybrid') && (!data.location || data.location.trim().length === 0)) {
@@ -85,11 +102,21 @@ export const updateEventSchema = z
     description: z.string().trim().min(10).optional(),
     organizer: z.string().trim().min(2).optional(),
     registrationUrl: z.string().trim().url().optional(),
+    registerUrl: z.string().trim().url().optional(),
     eventStartDate: z
       .string()
       .refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid start date' })
       .optional(),
+    startDate: z
+      .string()
+      .refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid start date' })
+      .optional(),
     eventEndDate: z
+      .string()
+      .refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid end date' })
+      .optional()
+      .nullable(),
+    endDate: z
       .string()
       .refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid end date' })
       .optional()
