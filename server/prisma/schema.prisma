@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  passwordHash     String
+  fullName         String
+  collegeName      String
+  course           String
+  academicYear     String
+  linkedinUrl      String
+  leetcodeUrl      String
+  leetcodeUsername String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sessions         Session[]
+  codingSolves     CodingProblemSolve[]
+  codingSyncs      CodingProgressSync[]
+  academicResources AcademicResource[]
+  researchPosts     ResearchPost[]
+  researchComments  ResearchComment[]
+  hackathonEvents   HackathonEvent[]
+
+  @@index([email])
+  @@index([leetcodeUsername])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model CodingProblemSolve {
+  id           String   @id @default(cuid())
+  userId       String
+  provider     String   @default("leetcode")
+  problemId    String   // e.g. titleSlug from LeetCode
+  problemTitle String
+  solvedAt     DateTime // actual timestamp from provider
+  solveDate    String   // normalized date string YYYY-MM-DD in Asia/Kolkata
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider, problemId]) // prevent duplicate solves
+  @@index([userId])
+  @@index([solveDate])
+  @@index([userId, solveDate])
+  @@index([provider])
+}
+
+model CodingProgressSync {
+  id           String   @id @default(cuid())
+  userId       String
+  provider     String   @default("leetcode")
+  status       String   // "success", "failed", "in_progress"
+  totalSolved  Int?     // total from provider at time of sync
+  newProblems  Int      @default(0) // new problems found in this sync
+  errorMessage String?
+  syncedAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, provider])
+  @@index([syncedAt])
+}
+
+model AcademicResource {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  subject     String
+  fileName    String   // original file name
+  storagePath String   // path in storage system
+  fileSize    Int
+  mimeType    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([subject])
+  @@index([createdAt])
+}
+
+model ResearchPost {
+  id             String   @id @default(cuid())
+  userId         String
+  title          String
+  abstract       String
+  content        String
+  category       String
+  referenceLinks String[] // array of URLs
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments ResearchComment[]
+
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model ResearchComment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post ResearchPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model HackathonEvent {
+  id                   String    @id @default(cuid())
+  userId               String
+  title                String
+  description          String
+  organizer            String
+  registrationUrl      String
+  eventStartDate       DateTime
+  eventEndDate         DateTime?
+  registrationDeadline DateTime?
+  mode                 String    // "online", "offline", "hybrid"
+  location             String?
+  category             String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([eventStartDate])
+  @@index([category])
+  @@index([createdAt])
+}
