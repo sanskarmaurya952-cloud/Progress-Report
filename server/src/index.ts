@@ -13,6 +13,7 @@ import rateLimit from 'express-rate-limit';
 import apiRouter from './routes';
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 

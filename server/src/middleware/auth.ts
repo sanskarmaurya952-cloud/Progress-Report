@@ -4,10 +4,13 @@ import { AuthenticatedUser } from '../types/express';
 
 export const SESSION_COOKIE_NAME = 'uplivo_session';
 
+const isProd = process.env.NODE_ENV === 'production';
+const sameSiteValue = (process.env.COOKIE_SAMESITE || (isProd ? 'none' : 'lax')) as 'lax' | 'none' | 'strict';
+
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  secure: isProd,
+  sameSite: sameSiteValue,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
   path: '/',
 };
