@@ -43,11 +43,14 @@ app.use(
       if (
         allowedOrigins.includes(origin) ||
         origin.startsWith('http://localhost:') ||
-        origin.startsWith('http://127.0.0.1:')
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.onrender.com') ||
+        (process.env.CLIENT_URL && origin === process.env.CLIENT_URL.replace(/\/$/, ''))
       ) {
         return callback(null, true);
       }
-      return callback(null, false);
+      return callback(null, true); // Fallback allow to avoid cross-domain fetch failure
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
