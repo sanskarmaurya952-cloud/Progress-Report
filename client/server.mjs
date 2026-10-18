@@ -1,10 +1,5 @@
 import { createServer } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function start() {
   console.log('[ALPHA++ Frontend] Starting Vite dev server...');
@@ -12,13 +7,8 @@ async function start() {
     configFile: false,
     root: '.',
     plugins: [react()],
-    resolve: {
-      alias: [
-        {
-          find: /^lucide-react$/,
-          replacement: path.resolve(__dirname, 'src/lib/icons.ts'),
-        },
-      ],
+    optimizeDeps: {
+      include: ['lucide-react'],
     },
     server: {
       port: 5173,

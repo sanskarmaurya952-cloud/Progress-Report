@@ -10,7 +10,7 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE = ((import.meta as any).env?.VITE_API_URL || '').replace(/\/$/, '');
 const BASE_URL = `${API_BASE}/api/v1`;
 
 export async function apiFetch<T = any>(
